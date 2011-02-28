@@ -85,7 +85,6 @@ PHP_FUNCTION(gvfs_info)
     flags |= G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS;
     file = g_file_parse_name (filename);
 
-
     info = g_file_query_info (file, "standard::content-type", flags, NULL, &error);
 
     if(error!=NULL) {
