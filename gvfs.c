@@ -38,7 +38,7 @@
 static function_entry gvfs_functions[] = {
     PHP_FE(gvfs_mount, NULL)
     PHP_FE(gvfs_info, NULL)
-    PHP_FE(gvfs_list_mount, NULL)
+    PHP_FE(gvfs_list_mounted, NULL)
     {NULL, NULL, NULL}
 };
 
@@ -70,7 +70,7 @@ PHP_FUNCTION(gvfs_mount)
 }
 
 
-PHP_FUNCTION(gvfs_list_mount) {
+PHP_FUNCTION(gvfs_list_mounted) {
     GList *l;
     int c;
     GMount *mount;

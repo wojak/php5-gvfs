@@ -6,7 +6,7 @@
 
 PHP_FUNCTION(gvfs_info);
 PHP_FUNCTION(gvfs_mount);
-PHP_FUNCTION(gvfs_list_mount);
+PHP_FUNCTION(gvfs_list_mounted);
 
 extern zend_module_entry gvfs_module_entry;
 #define phpext_gvfs_ptr &gvfs_module_entry
