@@ -29,7 +29,6 @@
 #include "php.h"
 #include "php_gvfs.h"
 
-
 #include <glib.h>
 #include <locale.h>
 #include <glib/gi18n.h>
@@ -37,7 +36,9 @@
 
 
 static function_entry gvfs_functions[] = {
+    PHP_FE(gvfs_mount, NULL)
     PHP_FE(gvfs_info, NULL)
+    PHP_FE(gvfs_list_mount, NULL)
     {NULL, NULL, NULL}
 };
 
@@ -61,6 +62,50 @@ zend_module_entry gvfs_module_entry = {
 #ifdef COMPILE_DL_GVFS
 ZEND_GET_MODULE(gvfs)
 #endif
+
+
+PHP_FUNCTION(gvfs_mount)
+{
+    RETURN_STRING("Hello World", 1);
+}
+
+
+PHP_FUNCTION(gvfs_list_mount) {
+    GList *l;
+    int c;
+    GMount *mount;
+    GVolume *volume;
+    char *name, *uuid, *uri;
+    GFile *root, *default_location;
+    GIcon *icon;
+    char **x_content_types;
+    GVolumeMonitor *volume_monitor;
+    GList *drives, *volumes, *mounts;
+    char s[1024];
+
+    volume_monitor = g_volume_monitor_get();
+    mounts = g_volume_monitor_get_mounts (volume_monitor);
+    array_init(return_value);
+    for (c = 0, l = mounts; l != NULL; l = l->next, c++) {
+        mount = (GMount *) l->data;
+        volume = g_mount_get_volume (mount);
+        if (volume != NULL) {
+            g_object_unref (volume);
+            continue;
+        }
+
+    name = g_mount_get_name (mount);
+    root = g_mount_get_root (mount);
+    uri = g_file_get_uri (root);
+
+    add_assoc_string(return_value, name, uri, 1);
+    }
+
+    g_list_foreach (mounts, (GFunc)g_object_unref, NULL);
+    g_list_free (mounts);
+
+  g_object_unref (volume_monitor);
+}
 
 
 PHP_FUNCTION(gvfs_info)
