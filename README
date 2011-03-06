@@ -5,12 +5,12 @@ Author: Wojciech Kupiec
 
 == Introduction
 
-This project is a try to impelment a php extension that will deliver a basic 
+This project is an attempt to impelment a php extension that will deliver a basic 
 support for the Gnome Virtual Filesystem (gvfs). The PHP language can 
-potentialy get two major advantages which are:
+potentialy get two major advantages:
 
 - Very solid and reliable content type checking tool
-- Support for afc, archive, burn, cdda, dav, dnssd, ftp, gphoto2, http, network, obexftp, sftp, smb, and more ...
+- Usage of all the gvfs-backends: afc, archive, burn, cdda, dav, dnssd, ftp, gphoto2, http, network, obexftp, sftp, smb, and more ...
 
 
 == API
