@@ -1,0 +1,53 @@
+php5-gvfs extension
+===================
+Author: Wojciech Kupiec
+2011-03-06
+
+== Introduction
+
+This project is a try to impelment a php extension that will deliver a basic 
+support for the Gnome Virtual Filesystem (gvfs). The PHP language can 
+potentialy get two major advantages which are:
+
+- Very solid and reliable content type checking tool
+- Support for afc, archive, burn, cdda, dav, dnssd, ftp, gphoto2, http, network, obexftp, sftp, smb, and more ...
+
+
+== API
+
+- gvfs_info($uri, $arrtribute)
+- gvfs_mount($uri, $username=null, $password=null)
+- gvfs_list_mounted()
+- gvfs_unmount($uri)
+- gvfs_is_mounted($uri)
+- gvfs_copy($sourceUri, $destinationUri)
+- gvfs_delete($uri)
+- gvfs_ls($uri)
+- gvfs_read($uri)
+- gvfs_file_exists($uri)
+
+
+== Usage example
+
+[source,php]
+---------------------------------------------------------------------
+
+if(gvfs_is_mounted('sftp://localhost/') || gvfs_mount('sftp://localhost/', 'kari', 'mypasswd')) {
+
+    if(gvfs_file_exists('sftp://localhost/etc/hosts')) {
+        $contentType=reset(gvfs_info("sftp://localhost/etc/hosts","standard::content-type"));
+        echo "The file content type is: $contentType";
+    } else {
+        echo "The file does not exist.";
+    }
+
+} else {
+    echo "Could not mount the remote file system.";
+}
+
+---------------------------------------------------------------------
+
+
+
+
+
