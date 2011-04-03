@@ -63,10 +63,105 @@ zend_module_entry gvfs_module_entry = {
 ZEND_GET_MODULE(gvfs)
 #endif
 
+static int outstanding_mounts = 0;
+static GMainLoop *main_loop;
+
+// Account the mounting proces should deal with
+typedef struct  {
+   char *username;
+   int username_len;
+   char *password;
+   int password_len;
+} gvfs_account;
+
+
+
+
+static void
+mount_done_cb (GObject *object,
+               GAsyncResult *res,
+               gpointer user_data)
+{
+    gboolean succeeded;
+    GError *error = NULL;
+
+    succeeded = g_file_mount_enclosing_volume_finish (G_FILE (object), res, &error);
+
+    if (!succeeded)
+      g_printerr (_("Error mounting location: %s\n"), error->message);
+
+    outstanding_mounts--;
+
+    if (outstanding_mounts == 0)
+      g_main_loop_quit (main_loop);
+}
+
+
+
+static void
+ask_password_cb (GMountOperation *op,
+                 const char      *message,
+                 const char      *default_user,
+                 const char      *default_domain,
+                 GAskPasswordFlags flags,
+                 gvfs_account *account)
+{
+//  g_print ("%s\n", message);
+  if (flags & G_ASK_PASSWORD_NEED_USERNAME)
+    {
+      g_mount_operation_set_username (op, account->username);
+    }
+
+/*  if (flags & G_ASK_PASSWORD_NEED_DOMAIN)
+    {
+      s = prompt_for ("Domain", default_domain, TRUE);
+      g_mount_operation_set_domain (op, s);
+      g_free (s);
+    }*/
+
+  if (flags & G_ASK_PASSWORD_NEED_PASSWORD)
+    {
+      g_mount_operation_set_password (op, account->password);
+    }
+
+  g_mount_operation_reply (op, G_MOUNT_OPERATION_HANDLED);
+
+}
+
+static GMountOperation *new_mount_op (gvfs_account *account)
+{
+  GMountOperation *op;
+  op = g_mount_operation_new ();
+  g_signal_connect (op, "ask_password", G_CALLBACK (ask_password_cb), account);
+  return op;
+}
+
 
 PHP_FUNCTION(gvfs_mount)
 {
-    RETURN_STRING("Hello World", 1);
+    char *filename, *password = NULL, *username = NULL;
+    int filename_len, password_len, username_len;
+    GFile *file;
+    gvfs_account account;
+    main_loop = g_main_loop_new (NULL, FALSE);
+
+    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|ss", &filename, &filename_len, &account.password, &account.password_len, &account.username, &account.username_len) == FAILURE) {
+       return;
+    }
+
+    g_type_init ();
+    file = g_file_parse_name (filename);
+    GMountOperation *op;
+
+    if (file == NULL)
+      return;
+
+    op = new_mount_op (&account);
+    g_file_mount_enclosing_volume (file, 0, op, NULL, mount_done_cb, op);
+    outstanding_mounts++;
+
+  if (outstanding_mounts > 0)
+    g_main_loop_run (main_loop);
 }
 
 
