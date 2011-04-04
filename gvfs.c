@@ -39,6 +39,7 @@ static function_entry gvfs_functions[] = {
     PHP_FE(gvfs_mount, NULL)
     PHP_FE(gvfs_info, NULL)
     PHP_FE(gvfs_list_mounted, NULL)
+    PHP_FE(gvfs_unmount, NULL)
     {NULL, NULL, NULL}
 };
 
@@ -75,6 +76,69 @@ typedef struct  {
 } gvfs_account;
 
 
+
+
+
+static void
+unmount_done_cb (GObject *object,
+                 GAsyncResult *res,
+                 gpointer user_data)
+{
+    gboolean succeeded;
+    GError *error = NULL;
+
+    succeeded = g_mount_unmount_with_operation_finish (G_MOUNT (object), res, &error);
+
+    g_object_unref (G_MOUNT (object));
+
+    if (!succeeded)
+      g_printerr (_("Error unmounting mount: %s\n"), error->message);
+
+    outstanding_mounts--;
+
+    if (outstanding_mounts == 0)
+      g_main_loop_quit (main_loop);
+}
+
+
+PHP_FUNCTION(gvfs_unmount) {
+    char *filename = NULL;
+    int filename_len = 0;
+
+    g_type_init();
+    GMount *mount;
+    GError *error = NULL;
+    GMountOperation *mount_op;
+    GFile *file;
+
+    if(zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &filename, &filename_len) == FAILURE) {
+       return;
+    }
+
+    file = g_file_parse_name (filename);
+    if (file == NULL)
+      return;
+
+    mount = g_file_find_enclosing_mount (file, NULL, &error);
+    if (mount == NULL)
+      {
+        g_printerr (_("Error finding enclosing mount: %s\n"), error->message);
+        return;
+      }
+
+    GMountOperation *op;
+    mount_op = g_mount_operation_new ();
+
+    g_mount_unmount_with_operation (mount, 0, mount_op, NULL, unmount_done_cb, NULL);
+    g_object_unref (mount_op);
+
+    outstanding_mounts++;
+    
+    main_loop = g_main_loop_new (NULL, FALSE);
+    if (outstanding_mounts > 0)
+      g_main_loop_run (main_loop);
+
+}
 
 
 static void
